@@ -1,6 +1,8 @@
 package com.example.trackee.helpers
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.util.Log
 import android.widget.Toast
 import com.example.trackee.network.ApiService
@@ -12,9 +14,15 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class LoginManager(private val apiService: ApiService, private val activity: MainActivity) {
+class LoginManager(private val apiService: ApiService) {
 
-    fun loginUser(email: String, password: String) {
+    // Define LoginCallback interface to handle success and failure responses
+    interface LoginCallback {
+        fun onSuccess(token: String, name: String, surname: String, email: String, id: String)
+        fun onFailure(errorMessage: String)
+    }
+
+    fun loginUser(email: String, password: String, callback: LoginCallback) {
         val loginRequest = LoginRequest(email, password)
 
         apiService.login(loginRequest).enqueue(object : Callback<LoginResponse> {
@@ -23,39 +31,27 @@ class LoginManager(private val apiService: ApiService, private val activity: Mai
                     val loginResponse = response.body()
 
                     if (loginResponse != null) {
-                        val token = loginResponse.token
-                        val name = loginResponse.name
-                        val surname = loginResponse.surname
-                        val email2 = loginResponse.email
-                        val id = loginResponse.id
-
-                        Log.d("Login", "Token: $token")
-                        Log.d("Login", "Name: $name $surname")
-                        Log.d("Login", "Email: $email2")
-                        Log.d("Login", "ID: $id")
-
-                        // Pass the token and user details to the next screen
-                        val intent = Intent(activity, HomeScreenActivity::class.java)
-                        intent.putExtra("token", token)
-                        intent.putExtra("name", name)
-                        intent.putExtra("surname", surname)
-                        intent.putExtra("email", email2)
-                        intent.putExtra("id", id)
-                        activity.startActivity(intent)
+                        // Invoke the success callback
+                        callback.onSuccess(
+                            loginResponse.token,
+                            loginResponse.name,
+                            loginResponse.surname,
+                            loginResponse.email,
+                            loginResponse.id
+                        )
+                    } else {
+                        callback.onFailure("Login response is null")
                     }
                 } else {
-                    Toast.makeText(
-                        activity,
-                        "Login failed: ${response.message()}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    callback.onFailure("Login failed: ${response.message()}")
                 }
             }
 
             override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                Toast.makeText(activity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+                callback.onFailure("Error: ${t.message}")
                 Log.e("Login", "Error: ${t.message}")
             }
         })
     }
+    
 }
