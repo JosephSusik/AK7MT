@@ -14,44 +14,59 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class LoginManager(private val apiService: ApiService) {
+class LoginManager(private val apiService: ApiService?, private val context: Context) {
+    private val sharedPreferences: SharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
 
-    // Define LoginCallback interface to handle success and failure responses
-    interface LoginCallback {
-        fun onSuccess(token: String, name: String, surname: String, email: String, id: String)
-        fun onFailure(errorMessage: String)
-    }
-
-    fun loginUser(email: String, password: String, callback: LoginCallback) {
+    fun loginUser(email: String, password: String) {
         val loginRequest = LoginRequest(email, password)
 
-        apiService.login(loginRequest).enqueue(object : Callback<LoginResponse> {
+        apiService?.login(loginRequest)?.enqueue(object : Callback<LoginResponse> {
             override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
                 if (response.isSuccessful) {
                     val loginResponse = response.body()
 
                     if (loginResponse != null) {
-                        // Invoke the success callback
-                        callback.onSuccess(
-                            loginResponse.token,
-                            loginResponse.name,
-                            loginResponse.surname,
-                            loginResponse.email,
-                            loginResponse.id
-                        )
+
+                        // Store user data in SharedPreferences
+                        sharedPreferences.edit().apply {
+                            putString("token", loginResponse.token)
+                            putString("name", loginResponse.name)
+                            putString("surname", loginResponse.surname)
+                            putString("email", loginResponse.email)
+                            putString("id", loginResponse.id)
+                            apply()
+                        }
+
+                        // Navigate to HomeScreenActivity
+                        val intent = Intent(context, HomeScreenActivity::class.java)
+                        context.startActivity(intent)
                     } else {
-                        callback.onFailure("Login response is null")
+                        Toast.makeText(
+                            context,
+                            "Login failed: ${response.message()}",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 } else {
-                    callback.onFailure("Login failed: ${response.message()}")
+                    Toast.makeText(
+                        context,
+                        "Login failed: ${response.message()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
 
             override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                callback.onFailure("Error: ${t.message}")
+                Toast.makeText(context, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
                 Log.e("Login", "Error: ${t.message}")
             }
         })
     }
-    
+    fun logoutUser() {
+        // Clear user data on logout
+        sharedPreferences.edit().clear().apply()
+        val intent = Intent(context, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        context.startActivity(intent)
+    }
 }
