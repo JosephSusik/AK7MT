@@ -9,26 +9,37 @@ import com.example.trackee.R
 import com.example.trackee.network.InvoiceResponse
 import formatDate
 
-class InvoiceAdapter(private val invoices: List<InvoiceResponse>) :
-    RecyclerView.Adapter<InvoiceAdapter.InvoiceViewHolder>() {
+class InvoiceAdapter(
+    private val invoices: List<InvoiceResponse>,
+    private val onItemClick: (String) -> Unit
+) : RecyclerView.Adapter<InvoiceAdapter.InvoiceViewHolder>() {
 
-    class InvoiceViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val invoiceNumber: TextView = view.findViewById(R.id.invoiceNumberTextView)
-        val total: TextView = view.findViewById(R.id.totalTextView)
-        val dateIssued: TextView = view.findViewById(R.id.dateIssuedTextView)
+    inner class InvoiceViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val invoiceNumberTextView: TextView = view.findViewById(R.id.invoiceNumberTextView)
+        val totalTextView: TextView = view.findViewById(R.id.totalTextView)
+        val dateIssuedTextView: TextView = view.findViewById(R.id.dateIssuedTextView)
+
+        init {
+            view.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    val invoice = invoices[position]
+                    onItemClick(invoice.invoiceNumber) // Pass invoice number on click
+                }
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): InvoiceViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_invoice, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_invoice, parent, false)
         return InvoiceViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: InvoiceViewHolder, position: Int) {
         val invoice = invoices[position]
-        holder.invoiceNumber.text = invoice.invoiceNumber
-        holder.total.text = "${invoice.currency} ${invoice.total}"
-        holder.dateIssued.text = "Issued: ${formatDate(invoice.dateIssued)}"
+        holder.invoiceNumberTextView.text = invoice.invoiceNumber
+        holder.totalTextView.text = "${invoice.currency} ${invoice.total}"
+        holder.dateIssuedTextView.text = "Issued: ${formatDate(invoice.dateIssued)}"
     }
 
     override fun getItemCount(): Int = invoices.size

@@ -3,6 +3,7 @@ import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.GET
+import retrofit2.http.Path
 
 interface ApiService {
 
@@ -13,4 +14,7 @@ interface ApiService {
     // Define the invoices endpoint
     @GET("/api/Invoices")
     fun getInvoices(): Call<List<InvoiceResponse>>
+
+    @GET("/api/Invoices/{invoiceNumber}")
+    fun getInvoiceDetails(@Path("invoiceNumber") invoiceNumber: String): Call<InvoiceResponse>
 }

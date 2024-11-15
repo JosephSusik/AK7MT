@@ -74,9 +74,24 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupRecyclerView(invoices: List<InvoiceResponse>) {
-        val recyclerView = requireView().findViewById<RecyclerView>(R.id.invoicesRecyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.adapter = InvoiceAdapter(invoices)
+        // Create the adapter with an onItemClick lambda
+        val adapter = InvoiceAdapter(invoices) { invoiceNumber ->
+            val fragment = InvoiceDetailFragment()
+            val args = Bundle().apply {
+                putString("invoiceNumber", invoiceNumber)
+            }
+            fragment.arguments = args
+
+            // Navigate to InvoiceDetailFragment
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null) // Enables the back button
+                .commit()
+        }
+
+        invoicesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        invoicesRecyclerView.adapter = adapter
     }
+
 
 }

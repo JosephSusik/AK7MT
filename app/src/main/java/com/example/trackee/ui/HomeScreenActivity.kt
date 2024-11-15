@@ -3,6 +3,7 @@ package com.example.trackee.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import com.example.trackee.R
 import com.google.android.material.bottomnavigation.BottomNavigationView
